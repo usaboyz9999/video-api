@@ -25,37 +25,38 @@ app.get("/video", async (req, res) => {
 
     let m3u8 = null;
 
-    // التقاط أي طلب m3u8
-    page.on("request", (request) => {
-      const url = request.url();
-      if (url.includes(".m3u8")) {
-        console.log("تم العثور على m3u8:", url);
-        m3u8 = url;
-      }
+    // 🔥 التقاط response بدل request
+    page.on("response", async (response) => {
+      try {
+        const url = response.url();
+
+        if (url.includes(".m3u8")) {
+          console.log("تم العثور على m3u8:", url);
+          m3u8 = url;
+        }
+
+        // أحيانًا الرابط يكون داخل JSON
+        const text = await response.text();
+
+        if (text.includes(".m3u8")) {
+          const match = text.match(/https?:\/\/[^"]+\.m3u8[^"]*/);
+          if (match) {
+            console.log("تم استخراج m3u8 من response:", match[0]);
+            m3u8 = match[0];
+          }
+        }
+      } catch {}
     });
 
-    // فتح الصفحة
     await page.goto(videoPage, {
       waitUntil: "networkidle2",
       timeout: 0,
     });
 
-    // انتظار تحميل الصفحة
+    // انتظار
     await new Promise((r) => setTimeout(r, 5000));
 
-    // محاولة الضغط على زر تشغيل
-    try {
-      await page.click("button");
-      console.log("تم الضغط على زر");
-    } catch (e) {
-      console.log("لم يتم العثور على زر");
-    }
-
-    // تحريك الماوس + الضغط
-    await page.mouse.move(300, 300);
-    await page.mouse.click(300, 300);
-
-    // تشغيل الفيديو يدويًا
+    // محاولة تشغيل الفيديو
     await page.evaluate(() => {
       const video = document.querySelector("video");
       if (video) {
@@ -64,8 +65,10 @@ app.get("/video", async (req, res) => {
       }
     });
 
+    await page.mouse.click(300, 300);
+
     // انتظار تحميل الفيديو
-    await new Promise((r) => setTimeout(r, 8000));
+    await new Promise((r) => setTimeout(r, 10000));
 
     await browser.close();
 
