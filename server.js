@@ -24,9 +24,8 @@ app.get("/video", async (req, res) => {
     console.log("فتح المتصفح...");
 
     const browser = await puppeteer.launch({
-  args: chromium.args,
-  executablePath: await chromium.executablePath(),
-  headless: true,
+  executablePath: "/usr/bin/chromium",
+  args: ["--no-sandbox", "--disable-setuid-sandbox"],
 });
 
     const page = await browser.newPage();
