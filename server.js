@@ -44,9 +44,9 @@ app.get("/video", async (req, res) => {
     console.log("فتح الصفحة...");
 
     await page.goto(videoPage, {
-      waitUntil: "networkidle2",
-      timeout: 0,
-    });
+  waitUntil: "networkidle2",
+  timeout: 0,
+});
 
     // ⏳ انتظار تحميل الفيديو
     await new Promise((r) => setTimeout(r, 8000));
