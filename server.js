@@ -23,40 +23,67 @@ app.get("/video", async (req, res) => {
 
     const page = await browser.newPage();
 
+    // 🧠 تقليد متصفح حقيقي
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+    );
+
+    await page.setExtraHTTPHeaders({
+      "accept-language": "en-US,en;q=0.9",
+    });
+
+    // 🚀 تسريع: منع تحميل الصور والخطوط
+    await page.setRequestInterception(true);
+    page.on("request", (reqq) => {
+      const type = reqq.resourceType();
+      if (["image", "font", "stylesheet"].includes(type)) {
+        reqq.abort();
+      } else {
+        reqq.continue();
+      }
+    });
+
     let m3u8 = null;
 
-    // 🔥 التقاط response بدل request
+    // 🔥 التقاط كل شيء (request + response)
+    page.on("request", (request) => {
+      const url = request.url();
+      if (url.includes(".m3u8")) {
+        console.log("request m3u8:", url);
+        m3u8 = url;
+      }
+    });
+
     page.on("response", async (response) => {
       try {
         const url = response.url();
 
         if (url.includes(".m3u8")) {
-          console.log("تم العثور على m3u8:", url);
+          console.log("response m3u8:", url);
           m3u8 = url;
         }
 
-        // أحيانًا الرابط يكون داخل JSON
         const text = await response.text();
-
         if (text.includes(".m3u8")) {
           const match = text.match(/https?:\/\/[^"]+\.m3u8[^"]*/);
           if (match) {
-            console.log("تم استخراج m3u8 من response:", match[0]);
+            console.log("json m3u8:", match[0]);
             m3u8 = match[0];
           }
         }
       } catch {}
     });
 
+    // فتح الصفحة
     await page.goto(videoPage, {
-      waitUntil: "networkidle2",
+      waitUntil: "domcontentloaded",
       timeout: 0,
     });
 
     // انتظار
-    await new Promise((r) => setTimeout(r, 5000));
+    await new Promise((r) => setTimeout(r, 6000));
 
-    // محاولة تشغيل الفيديو
+    // 🎬 محاولة تشغيل الفيديو
     await page.evaluate(() => {
       const video = document.querySelector("video");
       if (video) {
@@ -65,10 +92,12 @@ app.get("/video", async (req, res) => {
       }
     });
 
-    await page.mouse.click(300, 300);
+    // 🖱️ محاكاة المستخدم
+    await page.mouse.move(400, 400);
+    await page.mouse.click(400, 400);
 
-    // انتظار تحميل الفيديو
-    await new Promise((r) => setTimeout(r, 10000));
+    // ⏳ انتظار طويل (مهم جدًا)
+    await new Promise((r) => setTimeout(r, 15000));
 
     await browser.close();
 
@@ -92,5 +121,5 @@ app.get("/video", async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log("Server started on port 3000");
+  console.log("Server started");
 });
