@@ -1,4 +1,5 @@
 const express = require("express");
+const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer-core");
 
 const app = express();
